@@ -1,0 +1,458 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學期成績計算與預測器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4 transition-colors duration-200">
+    <div class="max-w-4xl mx-auto">
+        <!-- 標頭 -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700 tracking-tight flex items-center justify-center gap-2">
+                🎓 學期成績計算與預測器
+            </h1>
+            <p class="text-slate-500 mt-2 text-sm md:text-base">
+                輸入各項分數與配分比例，即時計算學期總成績，並提供「及格倒推預測」！
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- 左側：分數輸入區 -->
+            <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-6">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        ✍️ 分數與權重設定
+                    </h2>
+                    <button onclick="resetToDefault()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        重設為預設配分
+                    </button>
+                </div>
+
+                <!-- 權重加總檢查器 -->
+                <div id="weightAlert" class="hidden p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center gap-2">
+                    ⚠️ 權重加總必須等於 100%！（目前加總：<span id="currentWeightSum">100</span>%）
+                </div>
+
+                <!-- 各項目輸入列表 -->
+                <div class="space-y-4" id="inputsContainer">
+                    <!-- 項目 1 -->
+                    <div class="grid grid-cols-12 gap-3 items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100/50 transition-colors">
+                        <div class="col-span-5 md:col-span-6">
+                            <span class="font-medium text-slate-700 block text-sm md:text-base">第一次段考</span>
+                            <span class="text-xs text-slate-400">Exam 1</span>
+                        </div>
+                        <div class="col-span-4 md:col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">分數 (0-100)</label>
+                            <input type="number" id="score_exam1" value="43" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">權重 (%)</label>
+                            <input type="number" id="weight_exam1" value="20" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 項目 2 -->
+                    <div class="grid grid-cols-12 gap-3 items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100/50 transition-colors">
+                        <div class="col-span-5 md:col-span-6">
+                            <span class="font-medium text-slate-700 block text-sm md:text-base">第二次段考</span>
+                            <span class="text-xs text-slate-400">Exam 2</span>
+                        </div>
+                        <div class="col-span-4 md:col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">分數 (0-100)</label>
+                            <input type="number" id="score_exam2" value="47" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">權重 (%)</label>
+                            <input type="number" id="weight_exam2" value="20" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 項目 3 -->
+                    <div class="grid grid-cols-12 gap-3 items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100/50 transition-colors">
+                        <div class="col-span-5 md:col-span-6">
+                            <span class="font-medium text-slate-700 block text-sm md:text-base">第三次段考</span>
+                            <span class="text-xs text-slate-400">Exam 3</span>
+                        </div>
+                        <div class="col-span-4 md:col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">分數 (0-100)</label>
+                            <input type="number" id="score_exam3" value="65" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">權重 (%)</label>
+                            <input type="number" id="weight_exam3" value="20" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 項目 4 -->
+                    <div class="grid grid-cols-12 gap-3 items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100/50 transition-colors">
+                        <div class="col-span-5 md:col-span-6">
+                            <span class="font-medium text-slate-700 block text-sm md:text-base">平時成績</span>
+                            <span class="text-xs text-slate-400">Daily Classwork</span>
+                        </div>
+                        <div class="col-span-4 md:col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">分數 (0-100)</label>
+                            <input type="number" id="score_daily" value="70" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">權重 (%)</label>
+                            <input type="number" id="weight_daily" value="35" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 項目 5 -->
+                    <div class="grid grid-cols-12 gap-3 items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100/50 transition-colors">
+                        <div class="col-span-5 md:col-span-6">
+                            <span class="font-medium text-slate-700 block text-sm md:text-base">複習考</span>
+                            <span class="text-xs text-slate-400">Review Exam</span>
+                        </div>
+                        <div class="col-span-4 md:col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">分數 (0-100)</label>
+                            <input type="number" id="score_review" value="38" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-[10px] text-slate-400 uppercase font-bold">權重 (%)</label>
+                            <input type="number" id="weight_review" value="5" min="0" max="100" oninput="calculateGrade()"
+                                class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-semibold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速調整拉桿：直接滑動平時成績 -->
+                <div class="p-4 bg-indigo-50 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-indigo-800">💡 快速模擬：調高/調低「平時成績」</span>
+                        <span class="text-sm font-bold text-indigo-600" id="sliderVal">70分</span>
+                    </div>
+                    <input type="range" id="dailySlider" min="0" max="100" value="70" oninput="syncDailyScore(this.value)"
+                        class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    <p class="text-[11px] text-indigo-500 mt-1">您可以滑動上方拉桿，直接觀看平時成績變化對學期分數的影響。</p>
+                </div>
+            </div>
+
+            <!-- 右側：結果展示與預測分析 -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- 總分卡片 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2" id="statusStrip"></div>
+                    
+                    <span class="text-slate-400 font-medium text-sm">學期總成績</span>
+                    <div class="my-4 relative">
+                        <span class="text-6xl md:text-7xl font-black text-slate-800 tracking-tight" id="finalScore">57.4</span>
+                        <span class="text-xl font-bold text-slate-400 absolute bottom-1 -right-6">分</span>
+                    </div>
+
+                    <!-- 及格狀態 Badge -->
+                    <div id="statusBadge" class="px-4 py-1.5 rounded-full font-bold text-sm mb-4">
+                        不及格
+                    </div>
+
+                    <!-- 進度條 -->
+                    <div class="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden">
+                        <div id="scoreBar" class="h-full bg-red-500 transition-all duration-300" style="width: 57.4%;"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-xs text-slate-400">
+                        <span>0分</span>
+                        <span class="font-bold text-indigo-500">60分及格線</span>
+                        <span>100分</span>
+                    </div>
+                </div>
+
+                <!-- 戰略建議 / 倒推預測 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
+                    <h3 class="font-bold text-slate-700 text-base border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                        🎯 補救指南與目標倒推
+                    </h3>
+                    
+                    <div id="suggestionBox" class="space-y-3">
+                        <!-- 動態填入建議 -->
+                    </div>
+                </div>
+
+                <!-- 各項得分明細細分 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                    <h3 class="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2 mb-3">
+                        📊 實得分數貢獻明細
+                    </h3>
+                    <ul class="space-y-2 text-xs text-slate-500" id="contributionList">
+                        <!-- 動態填入 -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂提示小工具 -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm transition-opacity duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+        <span id="toastMsg">已重設配分！</span>
+    </div>
+
+    <script>
+        // 初始化計算
+        window.addEventListener('load', () => {
+            calculateGrade();
+        });
+
+        // 同步拉桿數值與輸入框
+        function syncDailyScore(val) {
+            document.getElementById('score_daily').value = val;
+            document.getElementById('sliderVal').innerText = val + '分';
+            calculateGrade();
+        }
+
+        // 當手動輸入分數時同步拉桿
+        function syncSliderFromInput(val) {
+            const slider = document.getElementById('dailySlider');
+            slider.value = val;
+            document.getElementById('sliderVal').innerText = val + '分';
+        }
+
+        // 計算成績核心邏輯
+        function calculateGrade() {
+            // 抓取各欄位分數
+            const s_exam1 = parseFloat(document.getElementById('score_exam1').value) || 0;
+            const s_exam2 = parseFloat(document.getElementById('score_exam2').value) || 0;
+            const s_exam3 = parseFloat(document.getElementById('score_exam3').value) || 0;
+            const s_daily = parseFloat(document.getElementById('score_daily').value) || 0;
+            const s_review = parseFloat(document.getElementById('score_review').value) || 0;
+
+            // 抓取各權重
+            const w_exam1 = parseFloat(document.getElementById('weight_exam1').value) || 0;
+            const w_exam2 = parseFloat(document.getElementById('weight_exam2').value) || 0;
+            const w_exam3 = parseFloat(document.getElementById('weight_exam3').value) || 0;
+            const w_daily = parseFloat(document.getElementById('weight_daily').value) || 0;
+            const w_review = parseFloat(document.getElementById('weight_review').value) || 0;
+
+            // 同步拉桿數值
+            syncSliderFromInput(s_daily);
+
+            // 權重檢查
+            const totalWeight = w_exam1 + w_exam2 + w_exam3 + w_daily + w_review;
+            const weightAlert = document.getElementById('weightAlert');
+            const currentWeightSum = document.getElementById('currentWeightSum');
+
+            if (totalWeight !== 100) {
+                weightAlert.classList.remove('hidden');
+                currentWeightSum.innerText = totalWeight;
+            } else {
+                weightAlert.classList.add('hidden');
+            }
+
+            // 計算各別得分貢獻 (得分 * 權重%)
+            const score1_contrib = s_exam1 * (w_exam1 / 100);
+            const score2_contrib = s_exam2 * (w_exam2 / 100);
+            const score3_contrib = s_exam3 * (w_exam3 / 100);
+            const daily_contrib = s_daily * (w_daily / 100);
+            const review_contrib = s_review * (w_review / 100);
+
+            // 總分
+            const totalScore = score1_contrib + score2_contrib + score3_contrib + daily_contrib + review_contrib;
+            const formattedScore = Math.round(totalScore * 100) / 100; // 四捨五入到小數點第二位
+
+            // 渲染總分與狀態 UI
+            updateResultUI(formattedScore);
+
+            // 渲染得分明細
+            updateContributionList(
+                { name: '第一次段考', score: s_exam1, weight: w_exam1, contrib: score1_contrib },
+                { name: '第二次段考', score: s_exam2, weight: w_exam2, contrib: score2_contrib },
+                { name: '第三次段考', score: s_exam3, weight: w_exam3, contrib: score3_contrib },
+                { name: '平時成績', score: s_daily, weight: w_daily, contrib: daily_contrib },
+                { name: '複習考', score: s_review, weight: w_review, contrib: review_contrib }
+            );
+
+            // 計算預測與倒推
+            generatePredictions(formattedScore, {
+                s_exam1, s_exam2, s_exam3, s_daily, s_review,
+                w_exam1, w_exam2, w_exam3, w_daily, w_review
+            });
+        }
+
+        // 更新結果 UI 卡片
+        function updateResultUI(score) {
+            const finalScoreEl = document.getElementById('finalScore');
+            const statusBadge = document.getElementById('statusBadge');
+            const scoreBar = document.getElementById('scoreBar');
+            const statusStrip = document.getElementById('statusStrip');
+
+            finalScoreEl.innerText = score.toFixed(2);
+            scoreBar.style.width = Math.min(score, 100) + '%';
+
+            if (score >= 60) {
+                statusBadge.innerText = '及格過關 🎉';
+                statusBadge.className = 'px-4 py-1.5 rounded-full font-bold text-sm mb-4 bg-emerald-100 text-emerald-800';
+                scoreBar.className = 'h-full bg-emerald-500 transition-all duration-300';
+                statusStrip.className = 'absolute top-0 left-0 w-full h-2 bg-emerald-500';
+            } else {
+                statusBadge.innerText = '不及格 💔';
+                statusBadge.className = 'px-4 py-1.5 rounded-full font-bold text-sm mb-4 bg-rose-100 text-rose-800';
+                scoreBar.className = 'h-full bg-rose-500 transition-all duration-300';
+                statusStrip.className = 'absolute top-0 left-0 w-full h-2 bg-rose-500';
+            }
+        }
+
+        // 更新各項目對總分的貢獻明細
+        function updateContributionList(...items) {
+            const listEl = document.getElementById('contributionList');
+            listEl.innerHTML = '';
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center py-1 border-b border-slate-50';
+                li.innerHTML = `
+                    <span>${item.name} (${item.weight}%)</span>
+                    <span class="font-medium text-slate-700">${item.score} × ${item.weight}% = <strong class="text-indigo-600">${item.contrib.toFixed(2)}</strong> 分</span>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        // 核心倒推預測演算法
+        function generatePredictions(currentScore, data) {
+            const container = document.getElementById('suggestionBox');
+            container.innerHTML = '';
+
+            if (currentScore >= 60) {
+                // 及格了，給予正面回饋
+                const safeMargin = (currentScore - 60).toFixed(2);
+                container.innerHTML = `
+                    <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-sm space-y-2">
+                        <p class="font-bold">恭喜！你目前的總成績已經安全及格了！</p>
+                        <p class="text-xs">你高於及格門檻 <strong>${safeMargin}分</strong>。維持現狀即可順利過關！</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 text-slate-700 rounded-xl text-sm space-y-1">
+                        <p class="font-bold">💡 額外成就模擬：</p>
+                        ${getHigherGradeTarget(currentScore, data)}
+                    </div>
+                `;
+            } else {
+                // 不及格，進行各種拯救路徑分析
+                const gap = (60 - currentScore).toFixed(2);
+                
+                // 1. 如果調平時成績
+                let dailyTargetText = "";
+                if (data.w_daily > 0) {
+                    const dailyNeeded = data.s_daily + (gap / (data.w_daily / 100));
+                    if (dailyNeeded <= 100) {
+                        dailyTargetText = `💡 只要請老師將<strong>平時成績</strong>調高至 <strong class="text-indigo-700 underline text-base">${Math.ceil(dailyNeeded)}分</strong>（目前是 ${data.s_daily} 分），你的學期成績就能直接跨過 60 分大關！`;
+                    } else {
+                        dailyTargetText = `⚠️ 由於平時權重限制，僅靠調高平時成績到 100 分仍無法補足差距。`;
+                    }
+                }
+
+                // 2. 如果是調第三次段考 (假設還沒考，或者可以補考/補分)
+                let exam3TargetText = "";
+                if (data.w_exam3 > 0) {
+                    const exam3Needed = data.s_exam3 + (gap / (data.w_exam3 / 100));
+                    if (exam3Needed <= 100) {
+                        exam3TargetText = `🎯 若第三次段考當初考到 <strong class="text-indigo-700 underline text-base">${Math.ceil(exam3Needed)}分</strong>（原為 ${data.s_exam3} 分），你也就能剛好及格！`;
+                    } else {
+                        exam3TargetText = `⚠️ 若光靠拉高第三次段考（即使拼到 100 分），仍無法單獨讓你及格，你需要平時成績和段考一起提升。`;
+                    }
+                }
+
+                container.innerHTML = `
+                    <div class="p-4 bg-rose-50 text-rose-800 rounded-xl text-sm space-y-2">
+                        <p class="font-bold">距離 60 分及格門檻，你目前還差了 <span class="text-lg font-black text-rose-600">${gap}分</span>。</p>
+                        <p class="text-xs">別氣餒！請參考下方的「生存指南」與老師討論補救機制！</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 text-slate-700 rounded-xl text-sm space-y-3">
+                        <p class="font-bold text-xs text-slate-400 tracking-wider uppercase">補救生存戰略</p>
+                        <ul class="space-y-3 text-xs md:text-sm leading-relaxed">
+                            <li class="flex items-start gap-2">
+                                <span class="bg-indigo-100 text-indigo-800 rounded px-1.5 py-0.5 text-xs font-bold shrink-0">方案 A</span>
+                                <span>${dailyTargetText}</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-indigo-100 text-indigo-800 rounded px-1.5 py-0.5 text-xs font-bold shrink-0">方案 B</span>
+                                <span>${exam3TargetText}</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="bg-amber-100 text-amber-800 rounded px-1.5 py-0.5 text-xs font-bold shrink-0">建議</span>
+                                <span>建議拿著第三次段考有進步的考卷去找老師，誠懇詢問是否能有<strong>「補考」</strong>、<strong>「繳交額外報告」</strong>、或是微調<strong>「平時成績」</strong>的機會！</span>
+                            </li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // 高分目標預測 (當已經及格時顯示，例如要到 70、80分需要什麼分數)
+        function getHigherGradeTarget(currentScore, data) {
+            const targets = [70, 80, 90];
+            let nextTarget = 70;
+            for (let t of targets) {
+                if (currentScore < t) {
+                    nextTarget = t;
+                    break;
+                }
+            }
+            if (currentScore >= 90) return `✨ 你的成績相當優秀！保持好學態度繼續加油！`;
+
+            const gap = nextTarget - currentScore;
+            const dailyNeeded = data.s_daily + (gap / (data.w_daily / 100));
+            
+            let message = `你想拿到 <strong>${nextTarget}分</strong> 嗎？<br>`;
+            if (dailyNeeded <= 100) {
+                message += `只需將「平時成績」努力拉高到 <strong class="text-indigo-600">${Math.ceil(dailyNeeded)}分</strong> 即可達成！`;
+            } else {
+                message += `你需要拉高段考分數或在其他大項拿到更高的成績。`;
+            }
+            return message;
+        }
+
+        // 重設配分與分數
+        function resetToDefault() {
+            document.getElementById('score_exam1').value = 43;
+            document.getElementById('weight_exam1').value = 20;
+
+            document.getElementById('score_exam2').value = 47;
+            document.getElementById('weight_exam2').value = 20;
+
+            document.getElementById('score_exam3').value = 65;
+            document.getElementById('weight_exam3').value = 20;
+
+            document.getElementById('score_daily').value = 70;
+            document.getElementById('weight_daily').value = 35;
+
+            document.getElementById('score_review').value = 38;
+            document.getElementById('weight_review').value = 5;
+
+            showToast("已回復為最初預設的分數與配分！");
+            calculateGrade();
+        }
+
+        // 簡易 Toast 提示
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
+
+```
